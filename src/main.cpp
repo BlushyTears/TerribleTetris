@@ -139,7 +139,7 @@ unsigned char getRandomNumberUCHAR(int min, int max) {
 }
 
 void CreateShape(std::vector<Offset> tempShape, std::vector<Shape*>* DB_Shapes) {
-    Color color = CLITERAL(Color) { getRandomNumberUCHAR(0, 255), getRandomNumberUCHAR(150, 255), getRandomNumberUCHAR(150, 255), getRandomNumberUCHAR(150, 255) };
+    Color color = CLITERAL(Color) { getRandomNumberUCHAR(120, 255), getRandomNumberUCHAR(120, 255), getRandomNumberUCHAR(120, 255), getRandomNumberUCHAR(255, 255) };
     Shape* shape = new Shape(screenWidth / 2.0f, screenHeight / 12.0f, color);
 
     for (int i = 0; i < tempShape.size(); i++) {
@@ -254,32 +254,31 @@ int main(void)
 {
     InitWindow(screenWidth, screenHeight, "Terrible Tetris");
     SetTargetFPS(60);
-    std::vector<Shape*>* DB_Shapes = new std::vector<Shape*>;
-    CreateShape(FirstShape, DB_Shapes);
-    CreateShape(SecondShape, DB_Shapes);
-    CreateShape(ThirdShape, DB_Shapes);
-    CreateShape(FourthShape, DB_Shapes);
+    std::vector<Shape*> DB_Shapes;
+    CreateShape(FirstShape, &DB_Shapes);
+    CreateShape(SecondShape, &DB_Shapes);
+    CreateShape(ThirdShape, &DB_Shapes);
+    CreateShape(FourthShape, &DB_Shapes);
 
-    currentShape = std::make_unique<Shape>(*((*DB_Shapes)[0]));
+    currentShape = std::make_unique<Shape>(*DB_Shapes[0]);
 
     while (!WindowShouldClose())
     {
         BeginDrawing();
         ClearBackground(BLACK);
         DrawText(TextFormat("FPS: %d", GetFPS()), 10, 10, 20, RAYWHITE);
-        DrawShape(*DB_Shapes);
-        swapShape(*DB_Shapes);
+        DrawShape(DB_Shapes);
+        swapShape(DB_Shapes);
         drawGrid();
         moveShape();
-        checkCollision(*DB_Shapes);
+        checkCollision(DB_Shapes);
         StepProcess();
         EndDrawing();
     }
 
-    for (auto shape : *DB_Shapes) {
+    for (auto shape : DB_Shapes) {
         delete shape;
     }
-    delete DB_Shapes;
 
     CloseWindow();
     return 0;
