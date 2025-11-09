@@ -7,13 +7,9 @@
 #include <time.h>
 #include <vector>
 #include <memory>
-
 #include <random>
-
 #include <string> 
 #include <chrono>
-#include "Tetris.h"
-#include <thread>
 
 const int screenWidth = 400;
 const int screenHeight = 1200;
@@ -26,6 +22,34 @@ using namespace std;
 using namespace std::chrono;
 
 const Color gridColor = {255, 255, 255, 150};
+
+struct Offset {
+    float x;
+    float y;
+};
+
+struct Shape {
+    float origin_x;
+    float origin_y;
+    int blockSize = 50;
+    Color color;
+    std::vector<Offset> offsets;
+
+    Shape(float x, float y, Color c)
+        : origin_x(x), origin_y(y), color(c) {
+    }
+
+    Shape(const Shape& other)
+        : origin_x(other.origin_x), origin_y(other.origin_y),
+        blockSize(other.blockSize), color(other.color),
+        offsets(other.offsets) {
+    }
+
+    void DesignShape(const Offset& o) {
+        offsets.push_back(o);
+    }
+};
+
 
 chrono::high_resolution_clock* globalStart;
 std::unique_ptr<Shape> currentShape;
@@ -66,7 +90,7 @@ void ProcessTick() {
 // Furthermore, loop should go backwards, since later shapes are more likely to collide with currentShape
 void checkCollision(std::vector<Shape*>& DB_Shapes) {
     for (int i = 0; i < currentShape->offsets.size(); i++) {
-        if (currentShape->origin_y + currentShape->offsets[i].y * currentShape->blockSize > 1150) {
+        if (currentShape->origin_y + currentShape->offsets[i].y * currentShape->blockSize + currentShape->blockSize > 1150) {
             generateNewShape(DB_Shapes);
             return;
         }
@@ -121,9 +145,8 @@ void CreateShape(std::vector<Offset> tempShape, std::vector<Shape*>* DB_Shapes) 
     for (int i = 0; i < tempShape.size(); i++) {
         shape->DesignShape(tempShape[i]);
     }
-    currentShape = std::make_unique<Shape>(*shape);
-    std::unique_ptr<Shape> currentShape;
 
+    std::unique_ptr<Shape> currentShape;
     DB_Shapes->push_back(shape);
     index++;
 }
@@ -154,6 +177,7 @@ void DrawShape(std::vector<Shape*>& DB_Shapes) {
 
 void generateNewShape(std::vector<Shape*>& DB_Shapes) {
     dormantShapes.push_back(std::make_unique<Shape>(*currentShape));
+
     int temp = index;
     while (temp == index) {
         temp = getRandomNumberInt(0, DB_Shapes.size() - 1);
@@ -236,6 +260,8 @@ int main(void)
     CreateShape(ThirdShape, DB_Shapes);
     CreateShape(FourthShape, DB_Shapes);
 
+    currentShape = std::make_unique<Shape>(*((*DB_Shapes)[0]));
+
     while (!WindowShouldClose())
     {
         BeginDrawing();
@@ -249,6 +275,11 @@ int main(void)
         StepProcess();
         EndDrawing();
     }
+
+    for (auto shape : *DB_Shapes) {
+        delete shape;
+    }
+    delete DB_Shapes;
 
     CloseWindow();
     return 0;
